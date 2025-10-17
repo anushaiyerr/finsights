@@ -1,9 +1,10 @@
 import streamlit as st
 import tempfile
+import time
 from gemini_client import GeminiClient
 
 st.set_page_config(
-    page_title="Gemini Finance Analyzer",
+    page_title="Finsights",
     page_icon="📊",
     layout="wide",
 )
@@ -16,7 +17,7 @@ st.markdown(
         font-size: 2.8rem !important;
         text-align: center;
         font-weight: 700;
-        color: #1e3a8a;
+        color: #c4d1f5;
         margin-bottom: 0.2em;
     }
     .subtitle {
@@ -33,8 +34,8 @@ st.markdown(
         font-weight: 600 !important;
     }
     </style>
-    <p class="big-title">📊 Gemini Finance Analyzer</p>
-    <p class="subtitle">Upload financial or healthcare documents and get AI-powered insights in seconds.</p>
+    <p class="big-title">Finsights</p>
+    <p class="subtitle">Make sense of healthcare reports</p>
     """,
     unsafe_allow_html=True,
 )
@@ -51,9 +52,23 @@ if uploaded_file:
         temp.write(uploaded_file.read())
         temp_path = temp.name
 
-    st.info("⏳ Analyzing your file with Gemini... please wait.", icon="🔍")
     client = GeminiClient()
+
+    # --- Placeholder for info + progress bar ---
+    placeholder = st.empty()
+    with placeholder.container():
+        st.info("Developing Insights...", icon="🔍")
+        progress_bar = st.progress(0)
+        # Simulate progress while Gemini processes
+        for i in range(5):
+            time.sleep(0.5)
+            progress_bar.progress((i + 1) * 20)
+
+    # --- Run Gemini analysis ---
     result = client.analyze_file(temp_path)
+
+    # --- Clear placeholder (remove info + progress bar) ---
+    placeholder.empty()
 
     st.success("✅ Analysis complete!")
     st.markdown("---")
@@ -67,7 +82,7 @@ if uploaded_file:
         if line.startswith("### 📘 Overview"):
             first_header_idx = i
             break
-    lines = lines[first_header_idx:]  # discard everything before the first header
+    lines = lines[first_header_idx:]
 
     # --- Organize by section ---
     sections = {
@@ -79,6 +94,19 @@ if uploaded_file:
 
     current_section = None
     for line in lines:
+        clean_line = line.lstrip("*-• ").strip()
+        clean_line = clean_line.replace("*", "")
+
+        # Bold labels if colon exists
+        if ":" in clean_line:
+            parts = clean_line.split(":", 1)
+            clean_line = f"<b>{parts[0]}:</b>{parts[1].strip()}"
+        # Bold labels if colon exists
+        if ":" in clean_line:
+            parts = clean_line.split(":", 1)
+            clean_line = f"<b>{parts[0]}:</b> {parts[1].strip()}"  
+
+
         if line.startswith("### 📘 Overview"):
             current_section = "📘 Overview"
             continue
@@ -92,8 +120,8 @@ if uploaded_file:
             current_section = "🧭 Key Takeaways"
             continue
 
-        if current_section:
-            sections[current_section].append(line)
+        if current_section and clean_line:
+            sections[current_section].append(clean_line)
 
     # --- Dashboard layout ---
     col1, col2 = st.columns(2)
@@ -103,16 +131,15 @@ if uploaded_file:
         if sections["📘 Overview"]:
             st.subheader("📘 Overview")
             st.markdown(
-                "<div style='background-color:#1c3a91; padding:15px; border-radius:10px; color:#fff;'>"
+                "<div style='background-color:#152142; padding:15px; border-radius:10px; color:#fff;'>"
                 + "<br>".join(sections["📘 Overview"])
                 + "</div>",
                 unsafe_allow_html=True,
             )
-
         if sections["💰 Financial Insights"]:
             st.subheader("💰 Financial Insights")
             st.markdown(
-                "<div style='background-color:#0b6623; padding:15px; border-radius:10px; color:#fff;'>"
+                "<div style='background-color:#2c452a; padding:15px; border-radius:10px; color:#fff;'>"
                 + "<br>".join(sections["💰 Financial Insights"])
                 + "</div>",
                 unsafe_allow_html=True,
@@ -123,21 +150,19 @@ if uploaded_file:
         if sections["🩺 Healthcare / Other Insights"]:
             st.subheader("🩺 Healthcare / Other Insights")
             st.markdown(
-                "<div style='background-color:#b86b00; padding:15px; border-radius:10px; color:#fff;'>"
+                "<div style='background-color:#563670; padding:15px; border-radius:10px; color:#fff;'>"
                 + "<br>".join(sections["🩺 Healthcare / Other Insights"])
                 + "</div>",
                 unsafe_allow_html=True,
             )
-
         if sections["🧭 Key Takeaways"]:
             st.subheader("🧭 Key Takeaways")
             st.markdown(
-                "<div style='background-color:#8b0000; padding:15px; border-radius:10px; color:#fff;'>"
+                "<div style='background-color:#6b2f3a; padding:15px; border-radius:10px; color:#fff;'>"
                 + "<br>".join(sections["🧭 Key Takeaways"])
                 + "</div>",
                 unsafe_allow_html=True,
             )
 
-   
 else:
     st.info("👆 Upload a file to begin.")
